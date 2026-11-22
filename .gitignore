@@ -1,0 +1,8 @@
+# Built when the site deploys
+site/guides/
+site/releases/
+site/credits/
+build/
+
+__pycache__/
+.DS_Store

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Build the product site's credits page from `Documentation/Credits.json`.
+"""Build the product site's credits page from `data/credits.json`.
 
-Writes `Website/credits/`, which is generated at deploy time and never committed:
+Writes `site/credits/`, which is generated at deploy time and never committed:
 
 - `index.html`: the developer, the community, the code contributors GitHub
   lists, any other roles, and the supporters by tier.
@@ -43,7 +43,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from site_page import FOOTER, banner, head_html, header_html, icon  # noqa: E402
 
 
-CREDITS_PATH = pathlib.PurePosixPath("Documentation/Credits.json")
+CREDITS_PATH = pathlib.PurePosixPath("data/credits.json")
 STYLESHEET = "/assets/credits.css?v=20261121-credits-2"
 PAGE_PATH = "/credits/"
 USER_AGENT = "crestbrowser.com credits"
@@ -699,7 +699,7 @@ def parse_arguments() -> argparse.Namespace:
 def main() -> int:
     arguments = parse_arguments()
     root = arguments.repository_root.resolve()
-    output = (arguments.output or root / "Website" / "credits").resolve()
+    output = (arguments.output or root / "site" / "credits").resolve()
     document = json.loads((root / CREDITS_PATH).read_text(encoding="utf-8"))
     settings = document.get("contributors", {})
     repository = str(settings.get("repository", "crest-browser/Crest"))

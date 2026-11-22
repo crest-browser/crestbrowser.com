@@ -1,0 +1,78 @@
+name: Deploy crestbrowser.com
+
+on:
+  push:
+    branches: [main]
+  # Crest starts a deploy after a Mac release, an App Store tag, a Help Center
+  # or release-note change, and once a day for the credits.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crestbrowser-com
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: website
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: crest-browser/Crest
+          path: crest
+          # Release pages read every release tag, and the history of the
+          # marketing version for the day each version landed.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: crest/HelpCenter/package-lock.json
+
+      - name: Check the site scripts
+        run: python3 -m unittest discover -s website/tests
+
+      - name: Export Crest's release history
+        run: python3 crest/Scripts/export-release-history.py --repository crest --output "$RUNNER_TEMP/release-history.json"
+
+      - name: Build the release notes pages
+        run: python3 website/scripts/build-release-pages.py --history "$RUNNER_TEMP/release-history.json"
+
+      - name: Build the credits page
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          # The campaign's creator access token; without it the credits list
+          # the supporters data/credits.json names.
+          PATREON_ACCESS_TOKEN: ${{ secrets.PATREON_ACCESS_TOKEN }}
+        run: python3 website/scripts/build-credits-page.py
+
+      - name: Build the Help Center into /guides
+        working-directory: crest/HelpCenter
+        run: |
+          npm ci
+          npx docusaurus build --out-dir "$GITHUB_WORKSPACE/website/site/guides"
+          node scripts/sanitize-build-output.js "$GITHUB_WORKSPACE/website/site/guides"
+
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: website/site
+
+      - name: Publish crestbrowser.com
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

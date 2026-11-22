@@ -11,9 +11,9 @@ import tempfile
 import unittest
 
 
-REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPOSITORY_ROOT / "Scripts"))
-SPECIFICATION = importlib.util.spec_from_file_location("build_credits_page", REPOSITORY_ROOT / "Scripts" / "build-credits-page.py")
+REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT / "scripts"))
+SPECIFICATION = importlib.util.spec_from_file_location("build_credits_page", REPOSITORY_ROOT / "scripts" / "build-credits-page.py")
 assert SPECIFICATION and SPECIFICATION.loader
 credits = importlib.util.module_from_spec(SPECIFICATION)
 # Its dataclasses look their module up by name while they are made.
@@ -54,10 +54,10 @@ class CreditsPageTests(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         root = pathlib.Path(temporary.name)
-        document = json.loads((REPOSITORY_ROOT / "Documentation" / "Credits.json").read_text())
+        document = json.loads((REPOSITORY_ROOT / "data" / "credits.json").read_text())
         document["supporters"] = {**document["supporters"], **supporters}
-        (root / "Documentation").mkdir()
-        (root / "Documentation" / "Credits.json").write_text(json.dumps(document))
+        (root / "data").mkdir()
+        (root / "data" / "credits.json").write_text(json.dumps(document))
         output = root / "credits"
         credits.build(
             root, output, contributors=[], patrons=credits.patrons_on_page(patreon_page()), fetcher=lambda _: None
@@ -84,7 +84,7 @@ class CreditsPageTests(unittest.TestCase):
             ],
             "hidden": ["9", "2"],
         }
-        tiers = credits.read_tiers(json.loads((REPOSITORY_ROOT / "Documentation" / "Credits.json").read_text())["supporters"])
+        tiers = credits.read_tiers(json.loads((REPOSITORY_ROOT / "data" / "credits.json").read_text())["supporters"])
         # Without Patreon, the entry that holds a hidden member ID is left out;
         # nothing yet ties the Ko-fi entry to patron 2.
         offline = credits.resolve_supporters(supporters, tiers, None)
@@ -98,7 +98,7 @@ class CreditsPageTests(unittest.TestCase):
     def test_two_patrons_with_one_name_stay_two(self) -> None:
         page = patreon_page()
         page["data"].append(dict(page["data"][1], id="7"))
-        tiers = credits.read_tiers(json.loads((REPOSITORY_ROOT / "Documentation" / "Credits.json").read_text())["supporters"])
+        tiers = credits.read_tiers(json.loads((REPOSITORY_ROOT / "data" / "credits.json").read_text())["supporters"])
         live = credits.resolve_supporters({"people": [], "hidden": []}, tiers, credits.patrons_on_page(page))
         self.assertEqual(2, [person.name for person in live["sustainer"]].count("Blake S"))
 

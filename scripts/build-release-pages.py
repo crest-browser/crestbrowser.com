@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build the product site's release notes from Crest's release history.
 
-Reads the JSON `Scripts/export-release-history.py` writes and renders
-`Website/releases/`, which is generated at deploy time and never committed:
+Reads the JSON Crest's `Scripts/export-release-history.py` writes and renders
+`site/releases/`, which is generated at deploy time and never committed:
 
 - `/releases/<platform>/<channel>/<version>/`: a release with everything that
   changed in it, and the releases before it as rows that open their own pages.
@@ -509,12 +509,12 @@ def parse_arguments() -> argparse.Namespace:
         "--history",
         type=pathlib.Path,
         required=True,
-        help="the JSON Scripts/export-release-history.py writes",
+        help="the JSON Crest's Scripts/export-release-history.py writes",
     )
     parser.add_argument(
         "--output",
         type=pathlib.Path,
-        default=pathlib.Path(__file__).resolve().parents[1] / "Website" / "releases",
+        default=pathlib.Path(__file__).resolve().parents[1] / "site" / "releases",
     )
     return parser.parse_args()
 
